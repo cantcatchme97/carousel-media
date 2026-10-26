@@ -38,7 +38,8 @@ PY
 # public HTTPS address via Tailscale Funnel
 TS="$(command -v tailscale || echo /Applications/Tailscale.app/Contents/MacOS/Tailscale)"
 if [ -x "$TS" ] && "$TS" status >/dev/null 2>&1; then
-  "$TS" funnel --bg --set-path /vf "http://127.0.0.1:$PORT" >/dev/null
+  echo "Setting up Funnel (if a link appears, open it and click Enable)..."
+  "$TS" funnel --bg --set-path /vf "http://127.0.0.1:$PORT"
   HOST="$("$TS" status --json | python3 -c 'import json,sys;print(json.load(sys.stdin)["Self"]["DNSName"].rstrip("."))')"
   echo ""; echo "🔗 Connector URL (add this on claude.ai → Settings → Connectors → Add custom connector):"
   echo "https://$HOST/vf/mcp/$TOKEN"
