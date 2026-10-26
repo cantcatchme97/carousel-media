@@ -19,8 +19,8 @@ http.createServer(async (req, res) => {
   let parsed; try { parsed = JSON.parse(body); } catch { res.writeHead(400).end("bad json"); return; }
   const server = new McpServer({ name: "video-frames", version: "2.0.0" });
   registerTools(server);
-  const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
+  const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: false });
   res.on("close", () => { transport.close(); server.close(); });
   try { await server.connect(transport); await transport.handleRequest(req, res, parsed); }
-  catch (e) { if (!res.headersSent) res.writeHead(500).end(String(e)); }
+  catch (e) { console.error(new Date().toISOString(), "request error", e.message); if (!res.headersSent) res.writeHead(500).end(String(e)); }
 }).listen(PORT, "127.0.0.1", () => console.log(`video-frames listening on 127.0.0.1:${PORT}`));

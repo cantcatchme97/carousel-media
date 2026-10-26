@@ -39,22 +39,19 @@ const toSec = t => (t === undefined || t === null || t === "") ? undefined
 const fmt = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
   return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(x).padStart(2, "0"); };
 
-async function resolveStream(url) {
-  const out = await run("yt-dlp", ["-f", "best[height<=480][vcodec!=none]/bv*[height<=480]/bv*/best", "--no-playlist", "--no-warnings",
-    "--print", "%(title)s", "--print", "%(duration)s", "--print", "%(url)s", "--print", "%(http_headers)j", ...cookieArgs(), "--", safeUrl(url)]);
-  const [title, duration, streamUrl, headersJson] = out.trim().split("\n");
-  let headers = "";
-  try { headers = Object.entries(JSON.parse(headersJson)).map(([k, v]) => `${k}: ${v}`).join("\r\n") + "\r\n"; } catch {}
-  return { title, duration: Number(duration) || 0, streamUrl, headers };
+// Download a small temporary copy (<=360p, video only), grab frames from it, then delete it.
+async function fetchTemp(url, dir) {
+  const out = await run("yt-dlp", ["-f", "bv*[height<=360][ext=mp4]/bv*[height<=360]/b[height<=360]/worst", "--no-playlist", "--no-warnings",
+    "--no-part", "-o", path.join(dir, "v.%(ext)s"), "--print", "%(title)s", "--print", "%(duration)s", "--print", "after_move:filepath",
+    "--no-simulate", ...cookieArgs(), "--", safeUrl(url)], { timeout: 240000 });
+  const [title, duration, file] = out.trim().split("\n");
+  if (!file || !fs.existsSync(file)) throw new Error("download failed");
+  return { title, duration: Number(duration) || 0, file };
 }
 
-async function grab(stream, t, width) {
-  if (!/^https?:\/\//.test(stream.streamUrl || "")) throw new Error("Unexpected stream address");
-  const args = ["-loglevel", "error", "-protocol_whitelist", "https,http,tls,tcp,crypto"];
-  if (stream.headers) args.push("-headers", stream.headers);
-  args.push("-ss", String(t), "-i", stream.streamUrl, "-frames:v", "1", "-vf", `scale=${width}:-2`,
-    "-f", "image2pipe", "-vcodec", "mjpeg", "-q:v", "4", "-");
-  return run("ffmpeg", args, { binary: true, timeout: 60000 });
+async function grab(file, t, width) {
+  return run("ffmpeg", ["-loglevel", "error", "-ss", String(t), "-i", file, "-frames:v", "1", "-vf", `scale=${width}:-2`,
+    "-f", "image2pipe", "-vcodec", "mjpeg", "-q:v", "4", "-"], { binary: true, timeout: 30000 });
 }
 
 function cleanVtt(vtt, every = 20) {
@@ -95,7 +92,8 @@ export function registerTools(server) {
           } catch {}
         }
         return { content: [{ type: "text", text: text ? `${head}\n${text}` : `${head}\n(no captions available)\n\n${(info.description || "").slice(0, 1500)}` }] };
-      } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+      } catch (e) { console.error(new Date().toISOString(), "get_transcript", url, e.message); throw e; }
+      finally { fs.rmSync(dir, { recursive: true, force: true }); }
     }
   );
 
@@ -111,7 +109,9 @@ export function registerTools(server) {
       width: z.number().int().min(240).max(1280).optional().describe("Frame width in px (default 512; 1024 to read on-screen text)"),
     },
     async ({ url, count = 16, start, end, timestamps, width = 512 }) => {
-      const stream = await resolveStream(url);
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vf-"));
+      try {
+      const stream = await fetchTemp(url, dir);
       let times;
       if (timestamps?.length) times = timestamps.map(toSec);
       else {
@@ -121,7 +121,7 @@ export function registerTools(server) {
       }
       const results = new Array(times.length); let next = 0;
       await Promise.all(Array.from({ length: 4 }, async () => {
-        while (next < times.length) { const i = next++; try { results[i] = await grab(stream, times[i], width); } catch (e) { results[i] = e; } }
+        while (next < times.length) { const i = next++; try { results[i] = await grab(stream.file, times[i], width); } catch (e) { results[i] = e; } }
       }));
       const content = [{ type: "text", text: `${stream.title} (${fmt(stream.duration)}) — ${times.length} frames` }];
       times.forEach((t, i) => {
@@ -130,6 +130,9 @@ export function registerTools(server) {
         else { content.push({ type: "text", text: fmt(t) }); content.push({ type: "image", data: r.toString("base64"), mimeType: "image/jpeg" }); }
       });
       return { content };
+      } catch (e) { console.error(new Date().toISOString(), "get_frames", url, e.message); throw e; }
+      finally { fs.rmSync(dir, { recursive: true, force: true }); }
+
     }
   );
 }
