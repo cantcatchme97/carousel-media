@@ -1,0 +1,24 @@
+name: fetch-model
+on:
+  push:
+    paths: ['models/models.txt']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and attach to release "models"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view models >/dev/null 2>&1 || gh release create models --title models --notes "Model files fetched by bot"
+          while IFS='|' read -r name url; do
+            [ -z "$name" ] && continue
+            case "$name" in \#*) continue;; esac
+            if gh release view models --json assets -q '.assets[].name' | grep -qx "$name"; then echo "have $name"; continue; fi
+            curl -fL --retry 3 -o "$name" "$url"
+            gh release upload models "$name" --clobber
+          done < models/models.txt
