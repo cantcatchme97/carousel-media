@@ -13,8 +13,12 @@ jobs:
       - name: Install tools
         run: pip install -q yt-dlp && sudo apt-get install -y -qq ffmpeg >/dev/null
       - name: Fetch transcript, info and frames
+        shell: bash {0}
         run: |
+          mkdir -p videos/_log
           while read -r url; do
+            echo "== $url" >> videos/_log/run.txt
+            yt-dlp -v --skip-download --print id "$url" >> videos/_log/run.txt 2>&1
             [ -z "$url" ] && continue
             id=$(yt-dlp --get-id "$url" 2>/dev/null || echo "")
             [ -z "$id" ] && { mkdir -p videos/_errors; yt-dlp --get-id "$url" > videos/_errors/last.txt 2>&1; continue; }
@@ -26,6 +30,7 @@ jobs:
               ffmpeg -loglevel error -i "$f" -vf "select='gt(scene,0.3)',scale=512:-1" -vsync vfr -frames:v 40 "$d/frames/s%03d.jpg" && rm -f "$f" || echo "video download failed" >> "$d/log.txt"
           done < videos/queue.txt
       - name: Commit
+        if: always()
         run: |
           git config user.name "video-bot"; git config user.email "video-bot@users.noreply.github.com"
           git add -A; git diff --cached --quiet || (git commit -m "Add fetched video data" && git push)
