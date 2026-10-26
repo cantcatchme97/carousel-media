@@ -1,0 +1,5 @@
+zebra.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/100_Plains_zebra_hair_patterns_close-up_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg?width=1600
+zebra-face.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Zebra_face.jpg?width=1600
+car.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Waymo_self-driving_car_front_view.gk.jpg?width=1600
+car-sf.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Waymo_Jaguar_I-Pace_in_San_Francisco.jpg?width=1600
+steth.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Doctors_stethoscope_1.jpg?width=1600

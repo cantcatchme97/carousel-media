@@ -1,0 +1,26 @@
+name: fetch-photos
+on:
+  push:
+    paths: ['**/photos.txt']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download photos listed in photos.txt files
+        run: |
+          for list in $(git ls-files '**/photos.txt'); do
+            dir=$(dirname "$list")/photos; mkdir -p "$dir"
+            while IFS='|' read -r name url; do
+              [ -z "$name" ] && continue
+              [ -f "$dir/$name" ] && continue
+              curl -sSL -A "carousel-media-bot/1.0 (cantcatchme97)" -o "$dir/$name" "$url" && echo "got $name"
+            done < "$list"
+          done
+      - name: Commit
+        run: |
+          git config user.name "photo-bot"; git config user.email "photo-bot@users.noreply.github.com"
+          git add -A; git diff --cached --quiet || (git commit -m "Add fetched photos" && git push)
