@@ -25,9 +25,7 @@ jobs:
             d=videos/$id; [ -f "$d/info.json" ] && continue; mkdir -p "$d"
             yt-dlp --skip-download --write-info-json --write-subs --write-auto-subs --sub-langs "en.*,hi.*" --sub-format vtt -o "$d/v.%(ext)s" "$url" > "$d/log.txt" 2>&1 || true
             [ -f "$d/v.info.json" ] && python3 -c "import json,sys;j=json.load(open('$d/v.info.json'));json.dump({k:j.get(k) for k in ['title','channel','view_count','like_count','comment_count','duration','upload_date','description','tags']},open('$d/info.json','w'),indent=1)" && rm "$d/v.info.json"
-            yt-dlp -f "worst[height>=360]/worst" -o "$d/video.%(ext)s" "$url" >> "$d/log.txt" 2>&1 && \
-              mkdir -p "$d/frames" && f=$(ls $d/video.* | head -1) && \
-              ffmpeg -loglevel error -i "$f" -vf "select='gt(scene,0.3)',scale=512:-1" -vsync vfr -frames:v 40 "$d/frames/s%03d.jpg" && rm -f "$f" || echo "video download failed" >> "$d/log.txt"
+            yt-dlp -f "bv*[height<=1280][ext=mp4]+ba[ext=m4a]/b[height<=1280][ext=mp4]/b" --merge-output-format mp4 -o "$d/video.%(ext)s" "$url" >> "$d/log.txt" 2>&1 || echo "video download failed" >> "$d/log.txt"
           done < videos/queue.txt
       - name: Commit
         if: always()
