@@ -6,6 +6,16 @@ import os from "node:os";
 import path from "node:path";
 
 const COOKIES = process.env.YTDLP_COOKIES_FILE;
+// Only allow public http(s) links, so nobody can pass yt-dlp options or point it at your home network.
+export function safeUrl(u) {
+  let x; try { x = new URL(String(u).trim()); } catch { throw new Error("Not a valid link"); }
+  if (!["http:", "https:"].includes(x.protocol)) throw new Error("Only http/https links are allowed");
+  const h = x.hostname.toLowerCase();
+  if (h === "localhost" || h.endsWith(".local") || h.endsWith(".internal") || h === "::1" || h === "[::1]" ||
+      /^(127\.|10\.|192\.168\.|169\.254\.|0\.)/.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h) || /^\[?f[cd]/.test(h))
+    throw new Error("Private or local addresses are not allowed");
+  return x.toString();
+}
 const cookieArgs = () => (COOKIES && fs.existsSync(COOKIES) ? ["--cookies", COOKIES] : []);
 
 export const run = (cmd, args, { binary = false, timeout = 120000 } = {}) =>
@@ -31,7 +41,7 @@ const fmt = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.f
 
 async function resolveStream(url) {
   const out = await run("yt-dlp", ["-f", "best[height<=480][vcodec!=none]/bv*[height<=480]/bv*/best", "--no-playlist", "--no-warnings",
-    "--print", "%(title)s", "--print", "%(duration)s", "--print", "%(url)s", "--print", "%(http_headers)j", ...cookieArgs(), url]);
+    "--print", "%(title)s", "--print", "%(duration)s", "--print", "%(url)s", "--print", "%(http_headers)j", ...cookieArgs(), "--", safeUrl(url)]);
   const [title, duration, streamUrl, headersJson] = out.trim().split("\n");
   let headers = "";
   try { headers = Object.entries(JSON.parse(headersJson)).map(([k, v]) => `${k}: ${v}`).join("\r\n") + "\r\n"; } catch {}
@@ -39,7 +49,8 @@ async function resolveStream(url) {
 }
 
 async function grab(stream, t, width) {
-  const args = ["-loglevel", "error"];
+  if (!/^https?:\/\//.test(stream.streamUrl || "")) throw new Error("Unexpected stream address");
+  const args = ["-loglevel", "error", "-protocol_whitelist", "https,http,tls,tcp,crypto"];
   if (stream.headers) args.push("-headers", stream.headers);
   args.push("-ss", String(t), "-i", stream.streamUrl, "-frames:v", "1", "-vf", `scale=${width}:-2`,
     "-f", "image2pipe", "-vcodec", "mjpeg", "-q:v", "4", "-");
@@ -71,13 +82,14 @@ export function registerTools(server) {
     async ({ url, lang = "en" }) => {
       const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vf-"));
       try {
-        const info = JSON.parse(await run("yt-dlp", ["-J", "--no-warnings", "--no-playlist", ...cookieArgs(), url]));
+        url = safeUrl(url);
+        const info = JSON.parse(await run("yt-dlp", ["-J", "--no-warnings", "--no-playlist", ...cookieArgs(), "--", url]));
         const head = `${info.title} — ${info.channel || info.uploader || ""} · ${fmt(info.duration || 0)} · ${info.view_count ?? "?"} views · ${info.like_count ?? "?"} likes · ${info.upload_date ?? ""}`;
         let text = "";
         for (const langs of [`${lang}-orig`, `${lang}`, `${lang}.*`]) {
           try {
             await run("yt-dlp", ["--skip-download", "--write-subs", "--write-auto-subs", "--sub-langs", langs, "--sub-format", "vtt",
-              "--no-warnings", "--no-playlist", "-o", path.join(dir, "v.%(ext)s"), ...cookieArgs(), url]);
+              "--no-warnings", "--no-playlist", "-o", path.join(dir, "v.%(ext)s"), ...cookieArgs(), "--", url]);
             const f = fs.readdirSync(dir).find(n => n.endsWith(".vtt"));
             if (f) { text = cleanVtt(fs.readFileSync(path.join(dir, f), "utf8")); if (text) break; }
           } catch {}
