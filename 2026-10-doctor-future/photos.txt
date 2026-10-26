@@ -3,3 +3,15 @@ zebra-face.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Zebra_face.jp
 car.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Waymo_self-driving_car_front_view.gk.jpg?width=1600
 car-sf.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Waymo_Jaguar_I-Pace_in_San_Francisco.jpg?width=1600
 steth.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Doctors_stethoscope_1.jpg?width=1600
+horse.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/The_Horse_in_Motion_high_res.jpg?width=1600
+wait1.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Sala_de_espera_de_hospital.jpg?width=1600
+wait2.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/A_waiting_room_at_a_medical_healthcare_clinic,_doctor's_office,_hospital.jpg?width=1600
+server1.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Cern_datacenter.jpg?width=1600
+server2.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/BalticServers_data_center.jpg?width=1600
+doc1.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Doctor_advises_patient.jpg?width=1600
+doc2.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Doctor_talking_with_a_patient.jpg?width=1600
+mammo1.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Mammography_machine.jpg?width=1600
+mammo2.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Woman_receives_mammogram.jpg?width=1600
+hands1.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Hold_hands.jpg?width=1600
+hands2.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Healing_hands_-_nursing.jpg?width=1600
+bed.jpg|https://commons.wikimedia.org/wiki/Special:FilePath/Patient_in_hospital_bed_joondalup_health_campus.jpg?width=1600
