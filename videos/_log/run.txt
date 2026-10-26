@@ -51,3 +51,23 @@ ERROR: [generic] '# retry 1792976510' is not a valid URL
   File "/home/runner/.local/lib/python3.12/site-packages/yt_dlp/extractor/generic.py", line 789, in _real_extract
     raise ExtractorError(f'{url!r} is not a valid URL', expected=True)
 
+== https://www.instagram.com/reel/Deqhx3cqsj2/
+[debug] Command-line config: ['-v', '--skip-download', '--print', 'id', 'https://www.instagram.com/reel/Deqhx3cqsj2/']
+[debug] Encodings: locale UTF-8, fs utf-8, pref UTF-8, out utf-8 (No ANSI), error utf-8 (No ANSI), screen utf-8 (No ANSI)
+[debug] yt-dlp version stable@2026.10.21 from yt-dlp/yt-dlp [8cdf4fea4] (pip)
+[debug] Python 3.12.3 (CPython x86_64 64bit) - Linux-6.17.0-1022-azure-x86_64-with-glibc2.39 (OpenSSL 3.0.13 30 Jan 2024, glibc 2.39)
+[debug] exe versions: ffmpeg 6.1.1 (setts), ffprobe 6.1.1
+[debug] Optional libraries: certifi-2023.11.17, requests-2.31.0 (unsupported), sqlite3-3.45.1, urllib3-2.0.7
+[debug] JS runtimes: none
+[debug] Proxy map: {}
+[debug] Request Handlers: urllib
+[debug] Plugin directories: none
+[debug] Loaded 1747 extractors
+[Instagram] Setting up session
+[Instagram] Extracting URL: https://www.instagram.com/reel/Deqhx3cqsj2/
+[Instagram] Deqhx3cqsj2: Checking post accessibility
+[Instagram] Deqhx3cqsj2: Downloading webpage
+[debug] Formats sorted by: hasvid, ie_pref, lang, quality, res, fps, hdr:12(7), vcodec, channels, acodec, size, br, asr, proto, vext, aext, hasaud, source, id
+[debug] Default format spec: bestvideo*+bestaudio/best
+[info] Deqhx3cqsj2: Downloading 1 format(s): dash-1138015278764127v+dash-1138015128764142a
+Deqhx3cqsj2

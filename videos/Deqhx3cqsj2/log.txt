@@ -1,0 +1,19 @@
+[Instagram] Setting up session
+[Instagram] Extracting URL: https://www.instagram.com/reel/Deqhx3cqsj2/
+[Instagram] Deqhx3cqsj2: Checking post accessibility
+[Instagram] Deqhx3cqsj2: Downloading webpage
+[info] Deqhx3cqsj2: Downloading 1 format(s): dash-1138015278764127v+dash-1138015128764142a
+[info] There are no subtitles for the requested languages
+[info] Writing video metadata as JSON to: videos/Deqhx3cqsj2/v.info.json
+[Instagram] Setting up session
+[Instagram] Extracting URL: https://www.instagram.com/reel/Deqhx3cqsj2/
+[Instagram] Deqhx3cqsj2: Checking post accessibility
+[Instagram] Deqhx3cqsj2: Downloading webpage
+[info] Deqhx3cqsj2: Downloading 1 format(s): dash-1138015275430794v+dash-1138015128764142a
+[download] Destination: videos/Deqhx3cqsj2/video.fdash-1138015275430794v.mp4
+[download]   0.0% of    5.63MiB at  461.98KiB/s ETA 00:12[download]   0.1% of    5.63MiB at    1.03MiB/s ETA 00:05[download]   0.1% of    5.63MiB at    2.19MiB/s ETA 00:02[download]   0.3% of    5.63MiB at    4.21MiB/s ETA 00:01[download]   0.5% of    5.63MiB at    7.81MiB/s ETA 00:00[download]   1.1% of    5.63MiB at   12.51MiB/s ETA 00:00[download]   2.2% of    5.63MiB at   20.29MiB/s ETA 00:00[download]   4.4% of    5.63MiB at   27.79MiB/s ETA 00:00[download]   8.9% of    5.63MiB at   38.40MiB/s ETA 00:00[download]  17.8% of    5.63MiB at   47.47MiB/s ETA 00:00[download]  35.5% of    5.63MiB at   50.01MiB/s ETA 00:00[download]  71.1% of    5.63MiB at   50.13MiB/s ETA 00:00[download] 100.0% of    5.63MiB at   51.05MiB/s ETA 00:00[download] 100% of    5.63MiB in 00:00:00 at 26.34MiB/s  
+[download] Destination: videos/Deqhx3cqsj2/video.fdash-1138015128764142a.m4a
+[download]   0.4% of  232.86KiB at  Unknown B/s ETA Unknown[download]   1.3% of  232.86KiB at    2.17MiB/s ETA 00:00  [download]   3.0% of  232.86KiB at    4.02MiB/s ETA 00:00[download]   6.4% of  232.86KiB at    7.23MiB/s ETA 00:00[download]  13.3% of  232.86KiB at    9.85MiB/s ETA 00:00[download]  27.1% of  232.86KiB at   10.01MiB/s ETA 00:00[download]  54.5% of  232.86KiB at   15.80MiB/s ETA 00:00[download] 100.0% of  232.86KiB at   21.70MiB/s ETA 00:00[download] 100% of  232.86KiB in 00:00:00 at 2.47MiB/s   
+[Merger] Merging formats into "videos/Deqhx3cqsj2/video.mp4"
+Deleting original file videos/Deqhx3cqsj2/video.fdash-1138015275430794v.mp4 (pass -k to keep)
+Deleting original file videos/Deqhx3cqsj2/video.fdash-1138015128764142a.m4a (pass -k to keep)
