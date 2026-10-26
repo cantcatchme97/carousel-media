@@ -5,7 +5,7 @@ DIR="$HOME/video-frames-mcp"; RAW="https://raw.githubusercontent.com/cantcatchme
 PORT=3459; LABEL="com.bhuvan.video-frames"; PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 echo "⏳ 1/4 Downloading connector files..."
 mkdir -p "$DIR" && cd "$DIR"
-for f in tools.mjs server.mjs server-http.mjs package.json; do curl -fsSL "$RAW/$f?$(date +%s)" -o "$f"; done
+for f in tools.mjs server.mjs server-http.mjs package.json update.sh; do curl -fsSL "$RAW/$f?$(date +%s)" -o "$f"; done
 echo "⏳ 2/4 Installing packages (30-90 sec)..."
 npm install --no-fund --no-audit --loglevel=error
 [ -f .token ] || openssl rand -hex 16 > .token
@@ -31,6 +31,20 @@ launchctl unload "$PLIST" 2>/dev/null || true
 launchctl load "$PLIST"
 sleep 2
 curl -fsS "http://127.0.0.1:$PORT/health" >/dev/null && echo "✅ video-frames service running (starts automatically after reboot)"
+# auto-update every 10 minutes
+chmod +x "$DIR/update.sh"
+UPL="$HOME/Library/LaunchAgents/$LABEL-updater.plist"
+cat > "$UPL" <<UP
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+ <key>Label</key><string>$LABEL-updater</string>
+ <key>ProgramArguments</key><array><string>/bin/bash</string><string>$DIR/update.sh</string></array>
+ <key>StartInterval</key><integer>600</integer><key>RunAtLoad</key><true/>
+</dict></plist>
+UP
+launchctl unload "$UPL" 2>/dev/null || true; launchctl load "$UPL"
+echo "✅ auto-update on (checks GitHub every 10 minutes)"
 # remove the desktop-only copy so tools don't show twice
 python3 - <<'PY'
 import json, os
