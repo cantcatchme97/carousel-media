@@ -11,6 +11,8 @@ const ROUTE = `/mcp/${TOKEN}`;
 
 http.createServer(async (req, res) => {
   const p = (req.url || "").split("?")[0];
+  const t0 = Date.now();
+  res.on("finish", () => console.log(new Date().toISOString(), req.method, p.replace(TOKEN, "<token>"), res.statusCode, `${Date.now() - t0}ms`));
   if (p.endsWith("/health")) { res.writeHead(200).end("ok"); return; }
   if (!p.endsWith(ROUTE)) { res.writeHead(404).end(); return; }
   if (req.method !== "POST") { res.writeHead(405, { Allow: "POST" }).end(); return; }
