@@ -71,12 +71,30 @@ function cleanVtt(vtt, every = 20) {
   return out.join(" ").trim();
 }
 
+// Background jobs: anything slower than ~8s keeps running here, and the same call made again picks up the result.
+const JOBS = new Map();
+const WAIT_MS = 8000;
+async function asJob(key, work) {
+  for (const [k, j] of JOBS) if (Date.now() - j.t > 30 * 60 * 1000) JOBS.delete(k);
+  let job = JOBS.get(key);
+  if (!job) {
+    job = { t: Date.now(), done: false };
+    job.p = work().then(r => { job.done = true; job.result = r; }, e => { job.done = true; job.error = e; });
+    JOBS.set(key, job);
+  }
+  if (!job.done) await Promise.race([job.p, new Promise(r => setTimeout(r, WAIT_MS))]);
+  if (!job.done) return { content: [{ type: "text", text: `Still working (${Math.round((Date.now() - job.t) / 1000)}s so far). Call this tool again with exactly the same arguments in about 20 seconds to get the result.` }] };
+  JOBS.delete(key);
+  if (job.error) throw job.error;
+  return job.result;
+}
+
 export function registerTools(server) {
   server.tool(
     "get_transcript",
     "Get a video's transcript (YouTube, Instagram, etc.) as text with a timestamp every ~20s, plus title, channel, views and duration. Tries the original-language captions first. Nothing is downloaded except the caption text.",
     { url: z.string().describe("Video link"), lang: z.string().optional().describe("Caption language, default English") },
-    async ({ url, lang = "en" }) => {
+    async ({ url, lang = "en" }) => asJob(JSON.stringify(["t", url, lang]), async () => {
       const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vf-"));
       try {
         url = safeUrl(url);
@@ -94,7 +112,7 @@ export function registerTools(server) {
         return { content: [{ type: "text", text: text ? `${head}\n${text}` : `${head}\n(no captions available)\n\n${(info.description || "").slice(0, 1500)}` }] };
       } catch (e) { console.error(new Date().toISOString(), "get_transcript", url, e.message); throw e; }
       finally { fs.rmSync(dir, { recursive: true, force: true }); }
-    }
+    })
   );
 
   server.tool(
@@ -108,7 +126,7 @@ export function registerTools(server) {
       timestamps: z.array(z.union([z.string(), z.number()])).optional().describe("Exact times to grab instead of even spacing"),
       width: z.number().int().min(240).max(1280).optional().describe("Frame width in px (default 512; 1024 to read on-screen text)"),
     },
-    async ({ url, count = 16, start, end, timestamps, width = 512 }) => {
+    async ({ url, count = 16, start, end, timestamps, width = 512 }) => asJob(JSON.stringify(["f", url, count, start, end, timestamps, width]), async () => {
       const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vf-"));
       try {
       const stream = await fetchTemp(url, dir);
@@ -132,7 +150,6 @@ export function registerTools(server) {
       return { content };
       } catch (e) { console.error(new Date().toISOString(), "get_frames", url, e.message); throw e; }
       finally { fs.rmSync(dir, { recursive: true, force: true }); }
-
-    }
+    })
   );
 }
