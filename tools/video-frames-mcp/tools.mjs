@@ -57,17 +57,18 @@ async function grab(file, t, width) {
 }
 
 function cleanVtt(vtt, every = 20) {
-  const out = []; let last = "", lastStamp = -every;
+  // YouTube auto-captions repeat the previous line in each cue; keep only lines we haven't just seen.
+  const out = []; let prev = new Set(), lastStamp = -every;
+  const clean = l => l.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/\s+/g, " ").trim();
   for (const block of vtt.split(/\n\n+/)) {
     const m = block.match(/(\d+):(\d+):(\d+)\.\d+ -->/) || block.match(/(\d+):(\d+)\.\d+ -->/);
     if (!m) continue;
     const t = m.length === 4 ? (+m[1]) * 3600 + (+m[2]) * 60 + (+m[3]) : (+m[1]) * 60 + (+m[2]);
-    const text = block.split("\n").filter(l => !l.includes("-->") && l.trim()).join(" ")
-      .replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/\s+/g, " ").trim();
-    if (!text || text === last) continue;
-    const add = text.startsWith(last) ? text.slice(last.length).trim() : text;
-    last = text;
-    if (!add) continue;
+    const lines = block.split("\n").filter(l => !l.includes("-->")).map(clean).filter(Boolean);
+    const fresh = lines.filter(l => !prev.has(l));
+    prev = new Set(lines);
+    if (!fresh.length) continue;
+    const add = fresh.join(" ");
     if (t - lastStamp >= every) { out.push(`\n[${fmt(t)}] ${add}`); lastStamp = t; } else out.push(add);
   }
   return out.join(" ").trim();
