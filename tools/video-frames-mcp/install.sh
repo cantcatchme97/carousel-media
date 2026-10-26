@@ -3,9 +3,11 @@
 set -e
 DIR="$HOME/video-frames-mcp"; RAW="https://raw.githubusercontent.com/cantcatchme97/carousel-media/main/tools/video-frames-mcp"
 PORT=3459; LABEL="com.bhuvan.video-frames"; PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
+echo "⏳ 1/4 Downloading connector files..."
 mkdir -p "$DIR" && cd "$DIR"
 for f in tools.mjs server.mjs server-http.mjs package.json; do curl -fsSL "$RAW/$f?$(date +%s)" -o "$f"; done
-npm install --silent --no-fund --no-audit
+echo "⏳ 2/4 Installing packages (30-90 sec)..."
+npm install --no-fund --no-audit --loglevel=error
 [ -f .token ] || openssl rand -hex 16 > .token
 TOKEN="$(cat .token)"; NODE="$(command -v node)"
 cat > "$PLIST" <<PL
@@ -24,6 +26,7 @@ cat > "$PLIST" <<PL
  <key>StandardOutPath</key><string>$DIR/server.log</string><key>StandardErrorPath</key><string>$DIR/server.log</string>
 </dict></plist>
 PL
+echo "⏳ 3/4 Starting the service..."
 launchctl unload "$PLIST" 2>/dev/null || true
 launchctl load "$PLIST"
 sleep 2
@@ -36,6 +39,7 @@ if os.path.exists(p):
     c = json.load(open(p)); c.get('mcpServers', {}).pop('video-frames', None); json.dump(c, open(p, 'w'), indent=2)
 PY
 # public HTTPS address via Tailscale Funnel
+echo "⏳ 4/4 Checking Tailscale Funnel..."
 TS="$(command -v tailscale || echo /Applications/Tailscale.app/Contents/MacOS/Tailscale)"
 if [ -x "$TS" ] && "$TS" status >/dev/null 2>&1; then
   echo "Setting up Funnel (if a link appears, open it and click Enable)..."
