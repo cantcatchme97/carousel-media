@@ -46,7 +46,9 @@ async function fetchTemp(url, dir) {
     "--no-simulate", ...cookieArgs(), "--", safeUrl(url)], { timeout: 240000 });
   const [title, duration, file] = out.trim().split("\n");
   if (!file || !fs.existsSync(file)) throw new Error("download failed");
-  return { title, duration: Number(duration) || 0, file };
+  let dur = Number(duration) || 0;
+  if (!dur) { try { dur = Number((await run("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file])).trim()) || 0; } catch {} }
+  return { title, duration: dur, file };
 }
 
 async function grab(file, t, width) {
