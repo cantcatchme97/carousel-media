@@ -1,13 +1,17 @@
-// TREATY checker for @how.to.audhd: replies once to anyone who comments "TREATY" on a recent post.
+// AuDHD Comment Guard for @how.to.audhd: hides self-promo/spam comments and replies once to anyone who comments "TREATY".
 // Runs every 10 min via launchd. Safety: once per person per post, rotating texts, random gaps,
 // max 3 replies per run (~18/hour), pauses itself on any API error.
 import fs from 'fs'; import os from 'os'; import path from 'path';
 const API = 'https://graph.threads.net/v1.0';
 const ME = 'how.to.audhd';
-const DIR = path.join(os.homedir(), '.treaty-checker');
+const DIR = path.join(os.homedir(), '.audhd-comment-guard');
 const STATE = path.join(DIR, 'state.json'); const LOG = path.join(DIR, 'log.csv');
 fs.mkdirSync(DIR, { recursive: true });
 const st = fs.existsSync(STATE) ? JSON.parse(fs.readFileSync(STATE, 'utf8')) : { replied: {}, counters: {}, paused: false };
+st.hidden = st.hidden || {};
+const SPAM_USERS = new Set(['oliveadhd','neuroguidejourney','ihsan.bydesign','careclinicapp','auvie.app','commandcenteradhd','weightlosswithken']);
+const SPAM_RE = /(link (is )?in (my )?bio|check (out )?my (bio|profile|page)|on my profile|in my bio|more in my bio|i write about this|my (gumroad|shop|store|course|app)|dm me for|follow me|https?:\/\/|www\.|\.com\b)/i;
+const isSpam = c => SPAM_USERS.has(c.username) || SPAM_RE.test(c.text || '');
 const save = () => fs.writeFileSync(STATE, JSON.stringify(st, null, 1));
 const log = (...a) => fs.appendFileSync(LOG, [new Date().toISOString(), ...a].join(',') + '\n');
 if (st.paused) { log('paused', st.paused); process.exit(0); }
@@ -38,10 +42,14 @@ try {
   const posts = (await call('me/threads', 'GET', { fields: 'id,timestamp', since, limit: 100 })).data || [];
   let sent = 0;
   for (const p of posts) {
-    if (sent >= 3) break;
-    const conv = (await call(`${p.id}/conversation`, 'GET', { fields: 'id,text,username', reverse: 'false', limit: 100 })).data || [];
+    const conv = (await call(`${p.id}/conversation`, 'GET', { fields: 'id,text,username,hide_status', reverse: 'false', limit: 100 })).data || [];
     for (const c of conv) {
-      if (sent >= 3) break;
+      if (c.username !== ME && !st.hidden[c.id] && c.hide_status !== 'HIDDEN' && isSpam(c)) {
+        try { await call(`${c.id}/manage_reply`, 'POST', { hide: 'true' }); st.hidden[c.id] = c.username; save(); log('hidden', c.id, c.username, p.id, JSON.stringify((c.text||'').slice(0,80)).replace(/,/g,' ')); }
+        catch (e) { log('hide-failed', c.id, c.username, String(e.message).slice(0,80).replace(/,/g,';')); st.hidden[c.id] = 'failed'; save(); }
+        continue;
+      }
+      if (sent >= 3) continue;
       if (c.username === ME || !/\btreaty\b/i.test(c.text || '')) continue;
       const key = p.id + ':' + c.username;
       if (st.replied[c.id] || st.replied[key]) continue;
