@@ -45,8 +45,8 @@ try {
     const conv = (await call(`${p.id}/conversation`, 'GET', { fields: 'id,text,username,hide_status', reverse: 'false', limit: 100 })).data || [];
     for (const c of conv) {
       if (c.username !== ME && !st.hidden[c.id] && c.hide_status !== 'HIDDEN' && isSpam(c)) {
-        try { await call(`${c.id}/manage_reply`, 'POST', { hide: 'true' }); st.hidden[c.id] = c.username; save(); log('hidden', c.id, c.username, p.id, JSON.stringify((c.text||'').slice(0,80)).replace(/,/g,' ')); }
-        catch (e) { log('hide-failed', c.id, c.username, String(e.message).slice(0,80).replace(/,/g,';')); st.hidden[c.id] = 'failed'; save(); }
+        try { await call(`${c.id}/manage_reply`, 'POST', { hide: 'true' }); st.hidden[c.id] = c.username; st.spamCount = st.spamCount || {}; st.spamCount[c.username] = (st.spamCount[c.username] || 0) + 1; if (st.spamCount[c.username] === 3) log('repeat-spammer', c.username, `https://www.threads.com/@${c.username}`); save(); log('hidden', c.id, c.username, p.id, JSON.stringify((c.text||'').slice(0,80)).replace(/,/g,' ')); }
+        catch (e) { if (String(e.message).startsWith('500')) { st.hidden[c.id] = 'already-hidden?'; save(); continue; } log('hide-failed', c.id, c.username, String(e.message).slice(0,80).replace(/,/g,';')); st.hidden[c.id] = 'failed'; save(); }
         continue;
       }
       if (sent >= 3) continue;
