@@ -14,6 +14,8 @@ const SPAM_RE = /(link (is )?in (my )?bio|check (out )?my (bio|profile|page)|on 
 const isSpam = c => SPAM_USERS.has(c.username) || SPAM_RE.test(c.text || '');
 const save = () => fs.writeFileSync(STATE, JSON.stringify(st, null, 1));
 const log = (...a) => fs.appendFileSync(LOG, [new Date().toISOString(), ...a].join(',') + '\n');
+// Network blips (Mac offline, DNS, timeouts) never pause. Any other pause retries itself after 60 min.
+if (st.paused && (/fetch failed|ENOTFOUND|ETIMEDOUT|ECONNRESET|network/i.test(st.paused) || Date.now() - (st.paused_at || 0) > 36e5)) { log('unpaused', st.paused); st.paused = false; save(); }
 if (st.paused) { log('paused', st.paused); process.exit(0); }
 function token() {
   try { const t = JSON.parse(fs.readFileSync(path.join(os.homedir(), '.threads-connector', 'token.json'), 'utf8')); if (t.access_token) return t.access_token; } catch {}
@@ -65,4 +67,8 @@ try {
     }
   }
   log('run-ok', `sent=${sent}`);
-} catch (e) { st.paused = String(e.message).replace(/,/g, ';'); save(); log('PAUSED', st.paused); }
+} catch (e) {
+  const m = String(e.message).replace(/,/g, ';');
+  if (/fetch failed|ENOTFOUND|ETIMEDOUT|ECONNRESET|network/i.test(m)) { log('net-error', m); }
+  else { st.paused = m; st.paused_at = Date.now(); save(); log('PAUSED', m); }
+}
